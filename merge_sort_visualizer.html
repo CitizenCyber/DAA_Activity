@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Merge Sort Divide & Conquer Visualizer</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    text-align:center;
+}
+
+header{
+    background:#2c3e50;
+    color:white;
+    padding:20px;
+}
+
+#controls{
+    margin:20px;
+}
+
+button{
+    padding:10px 18px;
+    margin:5px;
+    border:none;
+    border-radius:6px;
+    background:#27ae60;
+    color:white;
+    cursor:pointer;
+    font-size:14px;
+}
+
+button:hover{ background:#1e8449; }
+
+input[type=range]{
+    width:150px;
+}
+
+#array{
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    height:260px;
+    margin:30px;
+}
+
+.bar{
+    margin:4px;
+    width:35px;
+    background:#3498db;
+    color:white;
+    font-size:12px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+}
+
+.highlight{ background:#e74c3c; }
+.merge{ background:#f39c12; }
+.sorted{ background:#2ecc71; }
+
+.container{
+    width:80%;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    margin:20px 0;
+    border-radius:8px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+    text-align:left;
+}
+
+#tree{
+    font-family:monospace;
+    white-space:pre;
+    text-align:center;
+    margin-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Merge Sort – Divide & Conquer Visualization</h1>
+</header>
+
+<div id="controls">
+
+<button onclick="generateArray()">Generate Array</button>
+<button onclick="start()">Play</button>
+<button onclick="pause()">Pause</button>
+<button onclick="step()">Step</button>
+
+<br><br>
+
+Speed:
+<input type="range" min="50" max="1000" value="400" id="speed">
+
+</div>
+
+<div id="array"></div>
+
+<div class="container">
+
+<div class="card">
+<h2>Divide, Conquer, Combine</h2>
+
+<b>Divide</b><br>
+Split the array recursively into two halves until each subarray contains one element.
+
+<br><br>
+
+<b>Conquer</b><br>
+Sort each half recursively. Since a single element array is already sorted, recursion stops.
+
+<br><br>
+
+<b>Combine</b><br>
+Merge two sorted halves together to produce a fully sorted array.
+
+</div>
+
+<div class="card">
+<h2>Recursion Tree</h2>
+<div id="tree"></div>
+</div>
+
+<div class="card">
+<h2>Time Complexity Analysis</h2>
+
+<b>Recurrence Relation</b>
+
+<br><br>
+
+T(n) = 2T(n/2) + O(n)
+
+<br><br>
+
+Explanation:
+
+<ul>
+<li>2T(n/2) → Recursively sorting two halves</li>
+<li>O(n) → Merging two sorted halves</li>
+</ul>
+
+<b>Using Master Theorem</b>
+
+<br><br>
+
+T(n) = O(n log n)
+
+<br><br>
+
+<b>Complexities</b>
+
+<ul>
+<li>Best Case: O(n log n)</li>
+<li>Average Case: O(n log n)</li>
+<li>Worst Case: O(n log n)</li>
+</ul>
+
+</div>
+
+</div>
+
+<script>
+
+let array=[]
+let steps=[]
+let stepIndex=0
+let paused=false
+let delay=400
+
+document.getElementById("speed").oninput=function(){
+    delay=this.value
+}
+
+function sleep(ms){
+    return new Promise(r=>setTimeout(r,ms))
+}
+
+function generateArray(){
+
+array=[]
+steps=[]
+stepIndex=0
+
+let container=document.getElementById("array")
+container.innerHTML=""
+
+for(let i=0;i<10;i++){
+
+let value=Math.floor(Math.random()*90)+10
+array.push(value)
+
+let bar=document.createElement("div")
+bar.classList.add("bar")
+bar.style.height=value*2+"px"
+bar.innerText=value
+
+container.appendChild(bar)
+
+}
+
+document.getElementById("tree").innerText=""
+}
+
+function record(arr){
+steps.push([...arr])
+}
+
+function mergeSort(arr,l,r){
+
+if(l>=r) return
+
+let mid=Math.floor((l+r)/2)
+
+mergeSort(arr,l,mid)
+mergeSort(arr,mid+1,r)
+merge(arr,l,mid,r)
+
+}
+
+function merge(arr,l,mid,r){
+
+let left=arr.slice(l,mid+1)
+let right=arr.slice(mid+1,r+1)
+
+let i=0,j=0,k=l
+
+while(i<left.length && j<right.length){
+
+if(left[i]<=right[j]){
+arr[k]=left[i]; i++
+}else{
+arr[k]=right[j]; j++
+}
+
+record(arr)
+k++
+
+}
+
+while(i<left.length){
+arr[k]=left[i]
+i++;k++
+record(arr)
+}
+
+while(j<right.length){
+arr[k]=right[j]
+j++;k++
+record(arr)
+}
+
+}
+
+function buildTree(arr){
+
+function helper(a){
+
+if(a.length<=1) return [a]
+
+let mid=Math.floor(a.length/2)
+
+let left=a.slice(0,mid)
+let right=a.slice(mid)
+
+return [a,...helper(left),...helper(right)]
+}
+
+let nodes=helper(arr)
+let text=""
+
+for(let n of nodes){
+text+=JSON.stringify(n)+"\n"
+}
+
+document.getElementById("tree").innerText=text
+}
+
+async function visualize(){
+
+let bars=document.getElementsByClassName("bar")
+
+for(;stepIndex<steps.length;stepIndex++){
+
+if(paused) return
+
+let arr=steps[stepIndex]
+
+for(let i=0;i<arr.length;i++){
+
+bars[i].style.height=arr[i]*2+"px"
+bars[i].innerText=arr[i]
+
+}
+
+await sleep(delay)
+
+}
+
+for(let b of bars) b.classList.add("sorted")
+
+}
+
+function start(){
+
+paused=false
+visualize()
+
+}
+
+function pause(){
+
+paused=true
+
+}
+
+function step(){
+
+paused=true
+
+if(stepIndex>=steps.length) return
+
+let bars=document.getElementsByClassName("bar")
+let arr=steps[stepIndex]
+
+for(let i=0;i<arr.length;i++){
+bars[i].style.height=arr[i]*2+"px"
+bars[i].innerText=arr[i]
+}
+
+stepIndex++
+
+}
+
+function prepare(){
+
+steps=[]
+let arr=[...array]
+
+mergeSort(arr,0,arr.length-1)
+
+buildTree(array)
+
+}
+
+generateArray()
+
+document.querySelector("button").addEventListener("click",()=>{
+setTimeout(prepare,100)
+})
+
+</script>
+
+</body>
+</html>
